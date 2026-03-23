@@ -79,8 +79,6 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final statusEmoji = switch (widget.worker.status) {
       WorkerStatus.running => '🟢',
       WorkerStatus.idle => '⚪',
@@ -147,143 +145,125 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
         duration: const Duration(milliseconds: 120),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          width: 180,
-          // Keep card height compact to reduce clutter on small screens.
+          width: 200,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isRunning ? 0.15 : 0.08),
-                blurRadius: isRunning ? 12 : 6,
-                offset: const Offset(0, 3),
+                color: Colors.black.withOpacity(isRunning ? 0.12 : 0.06),
+                blurRadius: isRunning ? 16 : 8,
+                offset: Offset(0, isRunning ? 8 : 4),
               ),
             ],
             border: Border.all(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.08),
               width: 1,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Status accent stripe (minimal, solid)
-                  Container(
-                    height: 2,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+            borderRadius: BorderRadius.circular(14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with AI face and name
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _AiFace(
-                        workerId: widget.worker.id,
-                        status: widget.worker.status,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: widget.onTap,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      widget.worker.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    widget.worker.type.icon,
-                                    size: 14,
-                                    color: Colors.black.withOpacity(0.6),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.worker.description,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Column(
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: Icon(
-                              Icons.play_arrow_rounded,
-                              size: 18,
-                              color: Colors.black.withOpacity(0.6),
-                            ),
-                            onPressed: widget.onRun,
-                            tooltip: 'Run worker',
+                          _AiFace(
+                            workerId: widget.worker.id,
+                            status: widget.worker.status,
                           ),
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: Icon(
-                              Icons.settings_outlined,
-                              size: 18,
-                              color: Colors.black.withOpacity(0.6),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.worker.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  widget.worker.description,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
                             ),
-                            onPressed: widget.onOpenSettings,
-                            tooltip: 'Settings (placeholder)',
                           ),
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              size: 18,
-                              color: Colors.red.withOpacity(0.6),
-                            ),
-                            onPressed: widget.onDelete,
-                            tooltip: 'Delete worker',
+                          const SizedBox(width: 4),
+                          Icon(
+                            widget.worker.type.icon,
+                            size: 16,
+                            color: Colors.black.withOpacity(0.5),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _StatusPill(
+                ),
+                const SizedBox(height: 10),
+                // Status pill
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _StatusPill(
                     emoji: statusEmoji,
                     text: statusText,
                     color: statusColor,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                // Action buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _ActionButton(
+                          icon: Icons.play_arrow_rounded,
+                          onPressed: widget.onRun,
+                          tooltip: 'Run',
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _ActionButton(
+                          icon: Icons.settings_outlined,
+                          onPressed: widget.onOpenSettings,
+                          tooltip: 'Settings',
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _ActionButton(
+                          icon: Icons.delete_outline_rounded,
+                          isDestructive: true,
+                          onPressed: widget.onDelete,
+                          tooltip: 'Delete',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
         ),
@@ -406,3 +386,46 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String tooltip;
+  final bool isDestructive;
+
+  const _ActionButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDestructive
+                  ? Colors.red.withOpacity(0.2)
+                  : Colors.black.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isDestructive
+                ? Colors.red.shade600
+                : Colors.black.withOpacity(0.7),
+          ),
+        ),
+      ),
+    );
+  }
+}
