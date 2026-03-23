@@ -1,14 +1,99 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../board/board_controller.dart' show boardControllerProvider;
+import '../board/data/workr_backend_api.dart';
 import 'theme_mode_controller.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _isGoogleConnected = false;
+  bool _isLoadingGoogle = true;
+  bool _isConnectingGoogle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_refreshGoogleIntegration());
+  }
+
+  Future<void> _refreshGoogleIntegration() async {
+    setState(() => _isLoadingGoogle = true);
+    try {
+      final connected = await ref
+          .read(workrBackendApiProvider)
+          .hasGoogleIntegration();
+      if (!mounted) return;
+      setState(() {
+        _isGoogleConnected = connected;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isGoogleConnected = false;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingGoogle = false);
+      }
+    }
+  }
+
+  Future<void> _connectGoogle() async {
+    setState(() => _isConnectingGoogle = true);
+    try {
+      if (_isGoogleConnected) {
+        await ref.read(workrBackendApiProvider).disconnectGoogle();
+        if (!mounted) return;
+        setState(() => _isGoogleConnected = false);
+      }
+
+      final authUrl = await ref
+          .read(workrBackendApiProvider)
+          .googleOAuthStartUrl();
+      final launched = await launchUrl(
+        Uri.parse(authUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!mounted) return;
+
+      if (!launched) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google OAuth URL')),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Finish Google sign-in in browser, then tap "Check status".',
+          ),
+        ),
+      );
+    } catch (err) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Google connect failed: $err')));
+    } finally {
+      if (mounted) {
+        setState(() => _isConnectingGoogle = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final boardState = ref.watch(boardControllerProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -47,7 +132,6 @@ class SettingsScreen extends ConsumerWidget {
               Material(
                 color: colorScheme.surface,
                 elevation: 0,
-                borderRadius: BorderRadius.circular(12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
@@ -94,7 +178,82 @@ class SettingsScreen extends ConsumerWidget {
               Material(
                 color: colorScheme.surface,
                 elevation: 0,
-                borderRadius: BorderRadius.circular(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+                    width: 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Integrations',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            _isGoogleConnected
+                                ? Icons.check_circle_rounded
+                                : Icons.link_off_rounded,
+                            size: 18,
+                            color: _isGoogleConnected
+                                ? Colors.green
+                                : colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _isLoadingGoogle
+                                  ? 'Checking Google connection...'
+                                  : _isGoogleConnected
+                                  ? 'Google connected (Gmail ready)'
+                                  : 'Google not connected',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: _isConnectingGoogle
+                                ? null
+                                : _connectGoogle,
+                            icon: const Icon(Icons.mail_outline_rounded),
+                            label: Text(
+                              _isConnectingGoogle
+                                  ? 'Connecting...'
+                                  : _isGoogleConnected
+                                  ? 'Reconnect Google'
+                                  : 'Connect Google',
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _refreshGoogleIntegration,
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Check status'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Material(
+                color: colorScheme.surface,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(

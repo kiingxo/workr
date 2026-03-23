@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,12 +60,17 @@ class WorkersListScreen extends ConsumerWidget {
                           builder: (_) => WorkerDetailScreen(
                             workerId: worker.id,
                             workerName: worker.name,
+                            workerType: worker.type,
                           ),
                         ),
                       );
                     },
                     onRun: () async {
-                      await boardController.runWorker(id: worker.id);
+                      if (worker.type == AgentType.research) {
+                        await boardController.runWorker(id: worker.id);
+                        return;
+                      }
+                      await boardController.toggleWorker(id: worker.id);
                     },
                     onDelete: () {
                       showDialog<void>(
@@ -80,7 +87,9 @@ class WorkersListScreen extends ConsumerWidget {
                               TextButton(
                                 onPressed: () {
                                   Navigator.of(context).pop();
-                                  boardController.deleteWorker(id: worker.id);
+                                  unawaited(
+                                    boardController.deleteWorker(id: worker.id),
+                                  );
                                 },
                                 child: const Text(
                                   'Delete',
@@ -114,7 +123,7 @@ class WorkersListScreen extends ConsumerWidget {
                     );
                     if (result == null) return;
 
-                    boardController.addWorker(
+                    await boardController.addWorker(
                       name: result.name,
                       description: result.goal,
                       type: result.type,
@@ -220,6 +229,18 @@ class _WorkerListTile extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                icon: Icon(
+                  Icons.open_in_new_rounded,
+                  size: 18,
+                  color: Colors.black.withOpacity(0.6),
+                ),
+                onPressed: onOpen,
+                tooltip: 'Open details',
+              ),
+              const SizedBox(width: 4),
               Column(
                 children: [
                   IconButton(
@@ -400,6 +421,8 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
   @override
   Widget build(BuildContext context) {
     final types = AgentType.values;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return AlertDialog(
       title: const Text('Create AI Worker'),
@@ -413,87 +436,108 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
             children: [
               Text(
                 'Select Agent Type',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: types.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final type = types[index];
-                    final isSelected = _selectedType == type;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedType = type),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 70,
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.black : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.black
-                                : Colors.black.withOpacity(0.15),
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              type.icon,
-                              size: 28,
-                              color: isSelected ? Colors.white : Colors.black,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              type.displayName.split(' ')[0],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ],
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: types.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 1.1,
+                ),
+                itemBuilder: (context, index) {
+                  final type = types[index];
+                  final isSelected = _selectedType == type;
+                  final label = switch (type) {
+                    AgentType.email => 'Email',
+                    AgentType.socialContent => 'Social',
+                    AgentType.financeOps => 'Finance',
+                    AgentType.research => 'Research',
+                    AgentType.taskWorkflow => 'Tasks',
+                    AgentType.transitMaps => 'Transit',
+                  };
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => setState(() => _selectedType = type),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? colorScheme.primary.withValues(alpha: 0.14)
+                            : colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.outlineVariant.withValues(
+                                  alpha: 0.6,
+                                ),
+                          width: isSelected ? 1.6 : 1,
                         ),
                       ),
-                    );
-                  },
-                ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            type.icon,
+                            size: 22,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withValues(alpha: 0.74),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface.withValues(
+                                      alpha: 0.78,
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               if (_selectedType != null) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.04),
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.45,
+                    ),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.black.withOpacity(0.08)),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _selectedType!.displayName,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _selectedType!.description,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
