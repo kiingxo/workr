@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../board/board_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/theme_mode_controller.dart';
+import '../tasks/tasks_screen.dart';
 import '../workers/workers_list_screen.dart';
 
 class WorkrHomeScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,7 @@ class _WorkrHomeScreenState extends ConsumerState<WorkrHomeScreen> {
             children: const [
               BoardScreen(),
               WorkersListScreen(),
+              TasksScreen(),
               SettingsScreen(),
             ],
           ),
@@ -95,6 +97,11 @@ class _WorkrHomeScreenState extends ConsumerState<WorkrHomeScreen> {
               icon: Icon(Icons.list_alt_rounded),
               activeIcon: Icon(Icons.list_alt_rounded),
               label: 'Workers',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.task_alt_rounded),
+              activeIcon: Icon(Icons.task_alt_rounded),
+              label: 'Tasks',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),

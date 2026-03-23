@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum WorkerStatus {
-  running,
-  idle,
-  error,
-}
+enum WorkerStatus { running, idle, error }
 
 enum AgentType {
   email,
@@ -12,6 +8,7 @@ enum AgentType {
   financeOps,
   research,
   taskWorkflow,
+  transitMaps,
 }
 
 extension AgentTypeX on AgentType {
@@ -22,6 +19,7 @@ extension AgentTypeX on AgentType {
       AgentType.financeOps => 'Finance & Ops',
       AgentType.research => 'Research & Actions',
       AgentType.taskWorkflow => 'Task Automation',
+      AgentType.transitMaps => 'Maps Transit Alerts',
     };
   }
 
@@ -32,6 +30,8 @@ extension AgentTypeX on AgentType {
       AgentType.financeOps => 'Tracks spending, alerts, and automates tasks',
       AgentType.research => 'Pulls data and exports structured results',
       AgentType.taskWorkflow => 'Connects apps and executes workflows',
+      AgentType.transitMaps =>
+        'Watches bus times and alerts you before arrival',
     };
   }
 
@@ -42,6 +42,7 @@ extension AgentTypeX on AgentType {
       AgentType.financeOps => Icons.wallet_rounded,
       AgentType.research => Icons.search_rounded,
       AgentType.taskWorkflow => Icons.checklist_rounded,
+      AgentType.transitMaps => Icons.directions_bus_rounded,
     };
   }
 }
@@ -55,6 +56,7 @@ class Worker {
   final String description;
   final AgentType type;
   final WorkerStatus status;
+  final bool autoRunEnabled;
   final double x;
   final double y;
 
@@ -64,6 +66,7 @@ class Worker {
     required this.description,
     required this.type,
     required this.status,
+    this.autoRunEnabled = false,
     required this.x,
     required this.y,
   });
@@ -74,6 +77,7 @@ class Worker {
     String? description,
     AgentType? type,
     WorkerStatus? status,
+    bool? autoRunEnabled,
     double? x,
     double? y,
   }) {
@@ -83,9 +87,9 @@ class Worker {
       description: description ?? this.description,
       type: type ?? this.type,
       status: status ?? this.status,
+      autoRunEnabled: autoRunEnabled ?? this.autoRunEnabled,
       x: x ?? this.x,
       y: y ?? this.y,
     );
   }
 }
-
