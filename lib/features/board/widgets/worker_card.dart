@@ -10,8 +10,10 @@ import '../../../models/worker.dart';
 /// - Position updates are persisted via the provided callback.
 class WorkerCard extends StatefulWidget {
   final Worker worker;
+  final int unreadCount;
   final VoidCallback onTap;
   final VoidCallback onRun;
+  final VoidCallback? onOpenInbox;
   final VoidCallback onOpenSettings;
   final VoidCallback onDelete;
   final void Function(double x, double y) onPositionChanged;
@@ -19,8 +21,10 @@ class WorkerCard extends StatefulWidget {
   const WorkerCard({
     super.key,
     required this.worker,
+    this.unreadCount = 0,
     required this.onTap,
     required this.onRun,
+    this.onOpenInbox,
     required this.onOpenSettings,
     required this.onDelete,
     required this.onPositionChanged,
@@ -82,26 +86,37 @@ class _WorkerCardState extends State<WorkerCard>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final statusEmoji = switch (widget.worker.status) {
+    final isRunning =
+        (widget.worker.type == AgentType.email ||
+            widget.worker.type == AgentType.transitMaps)
+        ? widget.worker.autoRunEnabled
+        : widget.worker.status == WorkerStatus.running;
+
+    final effectiveStatus = isRunning ? WorkerStatus.running : _status;
+
+    final statusEmoji = switch (effectiveStatus) {
       WorkerStatus.running => '🟢',
       WorkerStatus.idle => '⚪',
       WorkerStatus.error => '🔴',
     };
 
-    final statusText = switch (widget.worker.status) {
+    final statusText = switch (effectiveStatus) {
       WorkerStatus.running => 'Running',
       WorkerStatus.idle => 'Idle',
       WorkerStatus.error => 'Error',
     };
 
-    final statusColor = switch (widget.worker.status) {
+    final statusColor = switch (effectiveStatus) {
       WorkerStatus.running => Colors.green,
       WorkerStatus.idle => Colors.grey,
       WorkerStatus.error => Colors.red,
     };
-
-    final isRunning = widget.worker.status == WorkerStatus.running;
     final isDark = theme.brightness == Brightness.dark;
+    final isResearch = widget.worker.type == AgentType.research;
+    final runButtonIcon = isResearch
+        ? Icons.play_arrow_rounded
+        : (isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded);
+    final runButtonTooltip = isResearch ? 'Run' : (isRunning ? 'Pause' : 'Run');
 
     return GestureDetector(
       // Drag behavior:
@@ -110,6 +125,7 @@ class _WorkerCardState extends State<WorkerCard>
       //
       // We attach gestures to the card so it wins the gesture arena over the board pan.
       behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
       onPanStart: (details) {
         _dragStartX = widget.worker.x;
         _dragStartY = widget.worker.y;
@@ -208,7 +224,7 @@ class _WorkerCardState extends State<WorkerCard>
                                 const SizedBox(height: 2),
                                 Text(
                                   widget.worker.description,
-                                  maxLines: 1,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 12,
@@ -222,12 +238,10 @@ class _WorkerCardState extends State<WorkerCard>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(
-                            widget.worker.type.icon,
-                            size: 16,
-                            color: colorScheme.onSurface.withValues(
-                              alpha: 0.52,
-                            ),
+                          _TypeIconWithBadge(
+                            icon: widget.worker.type.icon,
+                            unreadCount: widget.unreadCount,
+                            onTap: widget.onOpenInbox,
                           ),
                         ],
                       ),
@@ -252,11 +266,9 @@ class _WorkerCardState extends State<WorkerCard>
                     children: [
                       Expanded(
                         child: _ActionButton(
-                          icon: isRunning
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
+                          icon: runButtonIcon,
                           onPressed: widget.onRun,
-                          tooltip: isRunning ? 'Pause' : 'Run',
+                          tooltip: runButtonTooltip,
                           isActive: isRunning,
                         ),
                       ),
@@ -286,6 +298,67 @@ class _WorkerCardState extends State<WorkerCard>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TypeIconWithBadge extends StatelessWidget {
+  const _TypeIconWithBadge({
+    required this.icon,
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final int unreadCount;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final iconWidget = Icon(
+      icon,
+      size: 16,
+      color: colorScheme.onSurface.withValues(alpha: 0.52),
+    );
+
+    final content = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        iconWidget,
+        if (unreadCount > 0)
+          Positioned(
+            right: -8,
+            top: -8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.red.shade500,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 14),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(padding: const EdgeInsets.all(2), child: content),
     );
   }
 }
