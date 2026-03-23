@@ -14,10 +14,9 @@ class BoardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final boardState = ref.watch(boardControllerProvider);
     final boardController = ref.read(boardControllerProvider.notifier);
-    final theme = Theme.of(context);
 
     return ColoredBox(
-      color: theme.colorScheme.surfaceContainerLowest,
+      color: const Color(0xFFFAFAFA),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final double base = max(constraints.maxWidth, constraints.maxHeight);
@@ -29,7 +28,7 @@ class BoardScreen extends ConsumerWidget {
             children: [
               Positioned.fill(
                 child: ColoredBox(
-                  color: theme.colorScheme.surfaceContainerLowest,
+                  color: const Color(0xFFFAFAFA),
                   child: InteractiveViewer(
                     // Lets users pan around the board.
                     panEnabled: true,
@@ -146,7 +145,7 @@ class BoardScreen extends ConsumerWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: FloatingActionButton(
                     onPressed: () async {
                       final result =
@@ -161,7 +160,11 @@ class BoardScreen extends ConsumerWidget {
                         description: result.goal,
                       );
                     },
-                    child: const Icon(Icons.add),
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    highlightElevation: 4,
+                    child: const Icon(Icons.add_rounded, size: 28),
                   ),
                 ),
               ),
@@ -180,21 +183,12 @@ class _BoardBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Stack(
       children: [
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topLeft,
-                radius: 1.1,
-                colors: [
-                  theme.colorScheme.primaryContainer.withAlpha(210),
-                  theme.colorScheme.secondaryContainer.withAlpha(130),
-                  theme.colorScheme.surfaceContainerLowest,
-                ],
-              ),
+              color: Colors.white,
             ),
           ),
         ),
@@ -213,7 +207,7 @@ class _BoardBackground extends StatelessWidget {
                 radius: 0.95,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withAlpha(35),
+                  Colors.black.withOpacity(0.03),
                 ],
               ),
             ),
@@ -228,17 +222,36 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      // Keep grid super subtle (still visible on light gradients).
-      ..color = const Color(0x22000000)
-      ..strokeWidth = 1;
+      // Minimal grid - premium feel with slightly better visibility
+      ..color = const Color(0x12000000)
+      ..strokeWidth = 0.7;
+
+    final minorGridPaint = Paint()
+      // Lighter lines for minor grid
+      ..color = const Color(0x06000000)
+      ..strokeWidth = 0.5;
 
     final nodePaint = Paint()
-      ..color = const Color(0x33000000)
+      ..color = const Color(0x1A000000)
       ..style = PaintingStyle.fill;
 
     // Slightly larger grid for phone readability.
     const grid = 56.0;
+    const minorGrid = grid / 4;
 
+    // Draw minor grid (faint subdivisions)
+    for (double x = 0; x <= size.width; x += minorGrid) {
+      if (x % grid != 0) {
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), minorGridPaint);
+      }
+    }
+    for (double y = 0; y <= size.height; y += minorGrid) {
+      if (y % grid != 0) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), minorGridPaint);
+      }
+    }
+
+    // Draw major grid
     for (double x = 0; x <= size.width; x += grid) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
@@ -254,7 +267,7 @@ class _GridPainter extends CustomPainter {
         if (xi % nodeEvery == 0 && yi % nodeEvery == 0) {
           final x = xi * grid;
           final y = yi * grid;
-          canvas.drawCircle(Offset(x, y), 1.35, nodePaint);
+          canvas.drawCircle(Offset(x, y), 1.1, nodePaint);
         }
       }
     }
@@ -272,14 +285,46 @@ class _EmptyBoardHint extends StatelessWidget {
     return Positioned.fill(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'No Workers yet.\nTap + to create your first AI Worker.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black)
-                      .withAlpha((0.75 * 255).round()),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.1),
+                    width: 1,
+                  ),
                 ),
+                child: Icon(
+                  Icons.add_rounded,
+                  size: 28,
+                  color: Colors.black.withOpacity(0.4),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Your board is empty',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Create your first AI Worker to get started',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -292,46 +337,41 @@ class _WorkrCanvasMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Positioned(
-      top: 26,
-      left: 18,
+      top: 24,
+      left: 20,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLowest.withAlpha(160),
-          borderRadius: BorderRadius.circular(999),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: theme.colorScheme.primary.withAlpha(60),
+            color: Colors.black.withOpacity(0.08),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 10,
-              offset: const Offset(0, 6),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_awesome_rounded,
-                size: 18, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              'Workr',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.2,
-              ),
+            Icon(
+              Icons.auto_awesome_rounded,
+              size: 18,
+              color: Colors.black,
             ),
             const SizedBox(width: 8),
             Text(
-              'AI Workers',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withAlpha(160),
+              'Workr',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: Colors.black,
               ),
             ),
           ],

@@ -150,42 +150,37 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
           width: 180,
           // Keep card height compact to reduce clutter on small screens.
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: statusColor.withAlpha(((isRunning ? 0.25 : 0.12) * 255).round()),
-                blurRadius: isRunning ? 16 : 8,
-                offset: const Offset(0, 6),
+                color: Colors.black.withOpacity(isRunning ? 0.15 : 0.08),
+                blurRadius: isRunning ? 12 : 6,
+                offset: const Offset(0, 3),
               ),
             ],
             border: Border.all(
-              color: statusColor.withAlpha((0.25 * 255).round()),
+              color: Colors.black.withOpacity(0.05),
               width: 1,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Status accent stripe (Workr-style "agent active" look).
+                  // Status accent stripe (minimal, solid)
                   Container(
-                    height: 3,
+                    height: 2,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          statusColor.withAlpha(220),
-                          statusColor.withAlpha(70),
-                        ],
-                      ),
+                      color: statusColor,
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
                     ),
                   ),
@@ -210,19 +205,20 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: Colors.black,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               Text(
                                 widget.worker.description,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 12,
-                                  color: (theme.textTheme.bodySmall?.color ?? Colors.black)
-                                      .withAlpha((0.75 * 255).round()),
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
                             ],
@@ -234,21 +230,33 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                           IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                            icon: Icon(
+                              Icons.play_arrow_rounded,
+                              size: 18,
+                              color: Colors.black.withOpacity(0.6),
+                            ),
                             onPressed: widget.onRun,
                             tooltip: 'Run worker',
                           ),
                           IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: const Icon(Icons.settings_outlined, size: 20),
+                            icon: Icon(
+                              Icons.settings_outlined,
+                              size: 18,
+                              color: Colors.black.withOpacity(0.6),
+                            ),
                             onPressed: widget.onOpenSettings,
                             tooltip: 'Settings (placeholder)',
                           ),
                           IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                            icon: Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                              color: Colors.red.withOpacity(0.6),
+                            ),
                             onPressed: widget.onDelete,
                             tooltip: 'Delete worker',
                           ),
@@ -289,8 +297,8 @@ class _AiFace extends StatelessWidget {
     final faceColor = HSVColor.fromAHSV(
       1,
       hue.toDouble(),
-      0.75,
-      status == WorkerStatus.running ? 0.95 : 0.75,
+      0.65,
+      status == WorkerStatus.running ? 0.88 : 0.80,
     ).toColor();
 
     final eye = (hash % 2 == 0) ? '•' : '◦';
@@ -309,18 +317,18 @@ class _AiFace extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: faceColor,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           if (glow)
             BoxShadow(
-              color: faceColor.withAlpha((0.35 * 255).round()),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
+              color: faceColor.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
         ],
         border: Border.all(
-          color: faceColor.withAlpha((0.35 * 255).round()),
-          width: 1,
+          color: Colors.black.withOpacity(0.08),
+          width: 0.5,
         ),
       ),
       child: Center(
@@ -328,11 +336,11 @@ class _AiFace extends StatelessWidget {
           '$eye$eye\n$mouth',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
                 color: Colors.white,
                 height: 0.95,
-              ),
+          ),
         ),
       ),
     );
@@ -353,13 +361,13 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha((0.13 * 255).round()),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: color.withAlpha((0.45 * 255).round()),
-          width: 1,
+          color: color.withOpacity(0.2),
+          width: 0.8,
         ),
       ),
       child: Row(
@@ -368,15 +376,15 @@ class _StatusPill extends StatelessWidget {
           Text(
             emoji,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: color,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
           ),

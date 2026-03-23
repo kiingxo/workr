@@ -12,41 +12,53 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return ColoredBox(
-      color: theme.colorScheme.surfaceContainerLowest,
+      color: const Color(0xFFFAFAFA),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Settings',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 26,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
-                'This is a UI placeholder for future Workr configuration.',
+                'Configure your Workr board and preferences.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               Material(
-                color: theme.colorScheme.surface,
-                elevation: 2,
-                borderRadius: BorderRadius.circular(18),
+                color: Colors.white,
+                elevation: 0,
+                borderRadius: BorderRadius.circular(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Colors.black.withOpacity(0.06),
+                    width: 1,
+                  ),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Your current board snapshot',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                      Text(
+                        'Board snapshot',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       _InfoRow(
                         label: 'Workers',
                         value: '${boardState.workers.length}',
@@ -55,9 +67,13 @@ class SettingsScreen extends ConsumerWidget {
                         label: 'Running',
                         value: '${boardState.workers.where((w) => w.status.name == 'running').length}',
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Future ideas: per-worker settings, global preferences, and worker scheduling.',
+                      const SizedBox(height: 12),
+                      Text(
+                        'Future: per-worker settings, global preferences, and worker scheduling.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -83,21 +99,23 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(160),
-                ),
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
           ),
         ],
       ),

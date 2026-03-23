@@ -14,28 +14,29 @@ class WorkersListScreen extends ConsumerWidget {
     final boardController = ref.read(boardControllerProvider.notifier);
 
     return ColoredBox(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      color: const Color(0xFFFAFAFA),
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Workers',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 26,
                         ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${boardState.workers.length} AI workers on your board',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color:
-                              Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(160),
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
                         ),
                   ),
                 ],
@@ -43,7 +44,7 @@ class WorkersListScreen extends ConsumerWidget {
             ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: boardState.workers.length,
                 separatorBuilder: (context, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
@@ -142,8 +143,6 @@ class _WorkerListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final statusColor = switch (worker.status) {
       WorkerStatus.running => Colors.green,
       WorkerStatus.idle => Colors.grey,
@@ -151,11 +150,17 @@ class _WorkerListTile extends StatelessWidget {
     };
 
     return Material(
-      color: theme.colorScheme.surface,
-      elevation: 2,
-      borderRadius: BorderRadius.circular(18),
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.black.withOpacity(0.06),
+          width: 1,
+        ),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         onTap: onOpen,
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -165,7 +170,7 @@ class _WorkerListTile extends StatelessWidget {
                 workerId: worker.id,
                 status: worker.status,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,8 +179,9 @@ class _WorkerListTile extends StatelessWidget {
                       worker.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -183,8 +189,9 @@ class _WorkerListTile extends StatelessWidget {
                       worker.description,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color?.withAlpha(180),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -209,14 +216,22 @@ class _WorkerListTile extends StatelessWidget {
                   IconButton(
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                    icon: Icon(
+                      Icons.play_arrow_rounded,
+                      size: 18,
+                      color: Colors.black.withOpacity(0.6),
+                    ),
                     onPressed: onRun,
                     tooltip: 'Run',
                   ),
                   IconButton(
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: Colors.red.withOpacity(0.6),
+                    ),
                     onPressed: onDelete,
                     tooltip: 'Delete',
                   ),
@@ -244,13 +259,13 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha((0.13 * 255).round()),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: color.withAlpha((0.45 * 255).round()),
-          width: 1,
+          color: color.withOpacity(0.2),
+          width: 0.8,
         ),
       ),
       child: Row(
@@ -259,16 +274,16 @@ class _StatusPill extends StatelessWidget {
           Text(
             emoji,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
         ],
