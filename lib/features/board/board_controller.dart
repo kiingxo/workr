@@ -34,6 +34,7 @@ class BoardController extends Notifier<BoardState> {
   void addWorker({
     required String name,
     String? description,
+    required AgentType type,
   }) {
     final index = state.workers.length;
     final id = DateTime.now().microsecondsSinceEpoch.toString();
@@ -45,7 +46,8 @@ class BoardController extends Notifier<BoardState> {
     final worker = Worker(
       id: id,
       name: name,
-      description: description ?? 'Goal: run this worker',
+      description: description ?? 'Automated task execution',
+      type: type,
       status: WorkerStatus.idle,
       x: x,
       y: y,

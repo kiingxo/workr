@@ -116,6 +116,7 @@ class WorkersListScreen extends ConsumerWidget {
                     boardController.addWorker(
                       name: result.name,
                       description: result.goal,
+                      type: result.type,
                     );
                   },
                 ),
@@ -175,14 +176,26 @@ class _WorkerListTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      worker.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            worker.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          worker.type.icon,
+                          size: 16,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -360,10 +373,12 @@ class _AiFaceAvatar extends StatelessWidget {
 class _CreateWorkerDialogResult {
   final String name;
   final String goal;
+  final AgentType type;
 
   _CreateWorkerDialogResult({
     required this.name,
     required this.goal,
+    required this.type,
   });
 }
 
@@ -377,6 +392,7 @@ class _CreateWorkerDialog extends StatefulWidget {
 class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
   final _nameController = TextEditingController();
   final _goalController = TextEditingController();
+  AgentType? _selectedType;
 
   @override
   void dispose() {
@@ -387,32 +403,137 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final types = AgentType.values;
+
     return AlertDialog(
-      title: const Text('Create Worker'),
+      title: const Text('Create AI Worker'),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       content: SizedBox(
-        width: 320,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Worker name',
-                hintText: 'e.g. Marketing Helper',
+        width: 340,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select Agent Type',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _goalController,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(
-                labelText: 'Goal',
-                hintText: 'e.g. Draft 5 ad headlines daily',
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: types.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final type = types[index];
+                    final isSelected = _selectedType == type;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedType = type),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 70,
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.black : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.black
+                                : Colors.black.withOpacity(0.15),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              type.icon,
+                              size: 28,
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              type.displayName.split(' ')[0],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
-              maxLines: 3,
-            ),
-          ],
+              if (_selectedType != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.black.withOpacity(0.08),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedType!.displayName,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedType!.description,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: 'Worker name',
+                  hintText: 'e.g. Marketing Helper',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _goalController,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'e.g. Draft 5 ad headlines daily',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -421,17 +542,20 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () {
-            final name = _nameController.text.trim();
-            final goal = _goalController.text.trim();
-            Navigator.of(context).pop(
-              _CreateWorkerDialogResult(
-                name: name.isEmpty ? 'New Worker' : name,
-                goal: goal.isEmpty ? 'Goal: run this worker' : goal,
-              ),
-            );
-          },
-          child: const Text('Add'),
+          onPressed: _selectedType == null
+              ? null
+              : () {
+                  final name = _nameController.text.trim();
+                  final goal = _goalController.text.trim();
+                  Navigator.of(context).pop(
+                    _CreateWorkerDialogResult(
+                      name: name.isEmpty ? 'New Worker' : name,
+                      goal: goal.isEmpty ? 'Automated task execution' : goal,
+                      type: _selectedType!,
+                    ),
+                  );
+                },
+          child: const Text('Create'),
         ),
       ],
     );
