@@ -12,9 +12,10 @@ class WorkersListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final boardState = ref.watch(boardControllerProvider);
     final boardController = ref.read(boardControllerProvider.notifier);
+    final theme = Theme.of(context);
 
     return ColoredBox(
-      color: const Color(0xFFFAFAFA),
+      color: theme.scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -27,17 +28,17 @@ class WorkersListScreen extends ConsumerWidget {
                   Text(
                     'Workers',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 26,
-                        ),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${boardState.workers.length} AI workers on your board',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade600,
-                          fontSize: 13,
-                        ),
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -155,10 +156,7 @@ class _WorkerListTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.black.withOpacity(0.06),
-          width: 1,
-        ),
+        side: BorderSide(color: Colors.black.withOpacity(0.06), width: 1),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -167,10 +165,7 @@ class _WorkerListTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              _AiFaceAvatar(
-                workerId: worker.id,
-                status: worker.status,
-              ),
+              _AiFaceAvatar(workerId: worker.id, status: worker.status),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -183,10 +178,11 @@ class _WorkerListTile extends StatelessWidget {
                             worker.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
+                                ),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -228,7 +224,10 @@ class _WorkerListTile extends StatelessWidget {
                 children: [
                   IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                     icon: Icon(
                       Icons.play_arrow_rounded,
                       size: 18,
@@ -239,7 +238,10 @@ class _WorkerListTile extends StatelessWidget {
                   ),
                   IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                     icon: Icon(
                       Icons.delete_outline_rounded,
                       size: 18,
@@ -276,28 +278,25 @@ class _StatusPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 0.8,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             emoji,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontSize: 11),
           ),
           const SizedBox(width: 5),
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -309,10 +308,7 @@ class _AiFaceAvatar extends StatelessWidget {
   final String workerId;
   final WorkerStatus status;
 
-  const _AiFaceAvatar({
-    required this.workerId,
-    required this.status,
-  });
+  const _AiFaceAvatar({required this.workerId, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -359,11 +355,11 @@ class _AiFaceAvatar extends StatelessWidget {
           '$eye$eye\n$mouth',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                height: 0.95,
-              ),
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            height: 0.95,
+          ),
         ),
       ),
     );
@@ -418,9 +414,9 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
               Text(
                 'Select Agent Type',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -481,9 +477,7 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.04),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(0.08),
-                    ),
+                    border: Border.all(color: Colors.black.withOpacity(0.08)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,17 +485,17 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
                       Text(
                         _selectedType!.displayName,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                            ),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _selectedType!.description,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey.shade600,
-                              fontSize: 12,
-                            ),
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -561,4 +555,3 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
     );
   }
 }
-

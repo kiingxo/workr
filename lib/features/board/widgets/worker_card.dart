@@ -30,7 +30,8 @@ class WorkerCard extends StatefulWidget {
   State<WorkerCard> createState() => _WorkerCardState();
 }
 
-class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateMixin {
+class _WorkerCardState extends State<WorkerCard>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseScale;
 
@@ -79,6 +80,8 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final statusEmoji = switch (widget.worker.status) {
       WorkerStatus.running => '🟢',
       WorkerStatus.idle => '⚪',
@@ -98,6 +101,7 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
     };
 
     final isRunning = widget.worker.status == WorkerStatus.running;
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       // Drag behavior:
@@ -147,17 +151,25 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
           duration: const Duration(milliseconds: 160),
           width: 200,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark
+                ? colorScheme.surfaceContainerHigh
+                : colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isRunning ? 0.12 : 0.06),
+                color: Colors.black.withValues(
+                  alpha: isDark
+                      ? (isRunning ? 0.44 : 0.28)
+                      : (isRunning ? 0.12 : 0.06),
+                ),
                 blurRadius: isRunning ? 16 : 8,
                 offset: Offset(0, isRunning ? 8 : 4),
               ),
             ],
             border: Border.all(
-              color: Colors.black.withOpacity(0.08),
+              color: colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.8 : 0.45,
+              ),
               width: 1,
             ),
           ),
@@ -191,7 +203,6 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
-                                    color: Colors.black,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -201,7 +212,9 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.65,
+                                    ),
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
@@ -212,7 +225,9 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                           Icon(
                             widget.worker.type.icon,
                             size: 16,
-                            color: Colors.black.withOpacity(0.5),
+                            color: colorScheme.onSurface.withValues(
+                              alpha: 0.52,
+                            ),
                           ),
                         ],
                       ),
@@ -237,9 +252,12 @@ class _WorkerCardState extends State<WorkerCard> with SingleTickerProviderStateM
                     children: [
                       Expanded(
                         child: _ActionButton(
-                          icon: Icons.play_arrow_rounded,
+                          icon: isRunning
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
                           onPressed: widget.onRun,
-                          tooltip: 'Run',
+                          tooltip: isRunning ? 'Pause' : 'Run',
+                          isActive: isRunning,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -276,10 +294,7 @@ class _AiFace extends StatelessWidget {
   final String workerId;
   final WorkerStatus status;
 
-  const _AiFace({
-    required this.workerId,
-    required this.status,
-  });
+  const _AiFace({required this.workerId, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -313,13 +328,15 @@ class _AiFace extends StatelessWidget {
         boxShadow: [
           if (glow)
             BoxShadow(
-              color: faceColor.withOpacity(0.3),
+              color: faceColor.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
         ],
         border: Border.all(
-          color: Colors.black.withOpacity(0.08),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.16),
           width: 0.5,
         ),
       ),
@@ -328,10 +345,10 @@ class _AiFace extends StatelessWidget {
           '$eye$eye\n$mouth',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                height: 0.95,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            height: 0.95,
           ),
         ),
       ),
@@ -355,30 +372,27 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 0.8,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             emoji,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontSize: 11),
           ),
           const SizedBox(width: 5),
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -391,16 +405,23 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String tooltip;
   final bool isDestructive;
+  final bool isActive;
 
   const _ActionButton({
     required this.icon,
     required this.onPressed,
     required this.tooltip,
     this.isDestructive = false,
+    this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final background = isActive
+        ? colorScheme.onSurface.withValues(alpha: 0.08)
+        : colorScheme.surface;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -409,11 +430,14 @@ class _ActionButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
+            color: background,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isDestructive
-                  ? Colors.red.withOpacity(0.2)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.red.withValues(alpha: 0.25)
+                  : isActive
+                  ? colorScheme.onSurface.withValues(alpha: 0.34)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.5),
               width: 1,
             ),
           ),
@@ -422,7 +446,7 @@ class _ActionButton extends StatelessWidget {
             size: 18,
             color: isDestructive
                 ? Colors.red.shade600
-                : Colors.black.withOpacity(0.7),
+                : colorScheme.onSurface.withValues(alpha: 0.74),
           ),
         ),
       ),
