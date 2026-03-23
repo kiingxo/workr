@@ -1,35 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../board/board_screen.dart';
 import '../settings/settings_screen.dart';
+import '../settings/theme_mode_controller.dart';
 import '../workers/workers_list_screen.dart';
 
-class WorkrHomeScreen extends StatefulWidget {
+class WorkrHomeScreen extends ConsumerStatefulWidget {
   const WorkrHomeScreen({super.key});
 
   @override
-  State<WorkrHomeScreen> createState() => _WorkrHomeScreenState();
+  ConsumerState<WorkrHomeScreen> createState() => _WorkrHomeScreenState();
 }
 
-class _WorkrHomeScreenState extends State<WorkrHomeScreen> {
+class _WorkrHomeScreenState extends ConsumerState<WorkrHomeScreen> {
   int _index = 0;
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final themeModeController = ref.read(themeModeControllerProvider.notifier);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          BoardScreen(),
-          WorkersListScreen(),
-          SettingsScreen(),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _index,
+            children: const [
+              BoardScreen(),
+              WorkersListScreen(),
+              SettingsScreen(),
+            ],
+          ),
+          Positioned(
+            top: 10,
+            right: 14,
+            child: SafeArea(
+              child: Material(
+                color: colorScheme.surface,
+                shape: const CircleBorder(),
+                elevation: 2,
+                child: IconButton(
+                  tooltip: isDark
+                      ? 'Switch to light mode'
+                      : 'Switch to dark mode',
+                  onPressed: () {
+                    themeModeController.setThemeMode(
+                      isDark ? ThemeMode.light : ThemeMode.dark,
+                    );
+                  },
+                  icon: Icon(
+                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
-              color: Colors.black.withOpacity(0.06),
+              color: colorScheme.outlineVariant.withValues(alpha: 0.45),
               width: 1,
             ),
           ),
@@ -37,10 +72,10 @@ class _WorkrHomeScreenState extends State<WorkrHomeScreen> {
         child: BottomNavigationBar(
           currentIndex: _index,
           onTap: (i) => setState(() => _index = i),
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.surface,
           elevation: 0,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey.shade400,
+          selectedItemColor: colorScheme.onSurface,
+          unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.55),
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 12,
@@ -72,4 +107,3 @@ class _WorkrHomeScreenState extends State<WorkrHomeScreen> {
     );
   }
 }
-

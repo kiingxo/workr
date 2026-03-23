@@ -57,7 +57,11 @@ class BoardController extends Notifier<BoardState> {
   }
 
   /// Updates a Worker's position (x/y) persisted in state.
-  void updatePosition({required String id, required double x, required double y}) {
+  void updatePosition({
+    required String id,
+    required double x,
+    required double y,
+  }) {
     state = state.copyWith(
       workers: state.workers
           .map((w) => w.id == id ? w.copyWith(x: x, y: y) : w)
@@ -75,7 +79,10 @@ class BoardController extends Notifier<BoardState> {
       workers: state.workers
           .map(
             (w) => w.id == id
-                ? w.copyWith(status: status, description: description ?? w.description)
+                ? w.copyWith(
+                    status: status,
+                    description: description ?? w.description,
+                  )
                 : w,
           )
           .toList(growable: false),
@@ -93,15 +100,46 @@ class BoardController extends Notifier<BoardState> {
     // Simulate "AI worker" runtime without any backend logic.
     await Future<void>.delayed(const Duration(seconds: 2));
 
+    final refreshedWorkers = state.workers.where((w) => w.id == id);
+    final refreshed = refreshedWorkers.isEmpty ? null : refreshedWorkers.first;
+    if (refreshed == null) return;
+    if (refreshed.status != WorkerStatus.running) return;
+
     final now = DateTime.now();
     updateStatus(
       id: id,
       status: WorkerStatus.idle,
-      description: 'Last output: completed at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      description:
+          'Last output: completed at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
     );
+  }
+
+  void stopWorker({required String id}) {
+    final matchingWorkers = state.workers.where((w) => w.id == id);
+    final current = matchingWorkers.isEmpty ? null : matchingWorkers.first;
+    if (current == null) return;
+    if (current.status != WorkerStatus.running) return;
+
+    updateStatus(
+      id: id,
+      status: WorkerStatus.idle,
+      description: 'Stopped by user',
+    );
+  }
+
+  Future<void> toggleWorker({required String id}) async {
+    final matchingWorkers = state.workers.where((w) => w.id == id);
+    final current = matchingWorkers.isEmpty ? null : matchingWorkers.first;
+    if (current == null) return;
+
+    if (current.status == WorkerStatus.running) {
+      stopWorker(id: id);
+    } else {
+      await runWorker(id: id);
+    }
   }
 }
 
-final boardControllerProvider =
-    NotifierProvider<BoardController, BoardState>(BoardController.new);
-
+final boardControllerProvider = NotifierProvider<BoardController, BoardState>(
+  BoardController.new,
+);

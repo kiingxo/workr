@@ -15,9 +15,11 @@ class BoardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final boardState = ref.watch(boardControllerProvider);
     final boardController = ref.read(boardControllerProvider.notifier);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ColoredBox(
-      color: const Color(0xFFFAFAFA),
+      color: theme.scaffoldBackgroundColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final double base = max(constraints.maxWidth, constraints.maxHeight);
@@ -29,7 +31,7 @@ class BoardScreen extends ConsumerWidget {
             children: [
               Positioned.fill(
                 child: ColoredBox(
-                  color: const Color(0xFFFAFAFA),
+                  color: theme.scaffoldBackgroundColor,
                   child: InteractiveViewer(
                     // Lets users pan around the board.
                     panEnabled: true,
@@ -45,7 +47,10 @@ class BoardScreen extends ConsumerWidget {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          _BoardBackground(size: canvasSize),
+                          _BoardBackground(
+                            size: canvasSize,
+                            isDark: theme.brightness == Brightness.dark,
+                          ),
                           // Brand label that stays anchored while the canvas pans/zooms.
                           // (We place it inside the canvas stack so it matches the board vibe.)
                           const _WorkrCanvasMark(),
@@ -70,7 +75,9 @@ class BoardScreen extends ConsumerWidget {
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: const Text('Settings (placeholder)'),
+                                        title: const Text(
+                                          'Settings (placeholder)',
+                                        ),
                                         content: const Text(
                                           'Future: configure Worker behavior here.',
                                         ),
@@ -87,7 +94,7 @@ class BoardScreen extends ConsumerWidget {
                                 },
                                 onRun: () {
                                   unawaited(
-                                    boardController.runWorker(id: worker.id),
+                                    boardController.toggleWorker(id: worker.id),
                                   );
                                 },
                                 onDelete: () {
@@ -151,9 +158,9 @@ class BoardScreen extends ConsumerWidget {
                     onPressed: () async {
                       final result =
                           await showDialog<_CreateWorkerDialogResult>(
-                        context: context,
-                        builder: (context) => const _CreateWorkerDialog(),
-                      );
+                            context: context,
+                            builder: (context) => const _CreateWorkerDialog(),
+                          );
                       if (result == null) return;
 
                       boardController.addWorker(
@@ -162,8 +169,8 @@ class BoardScreen extends ConsumerWidget {
                         type: result.type,
                       );
                     },
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     elevation: 2,
                     highlightElevation: 4,
                     child: const Icon(Icons.add_rounded, size: 28),
@@ -180,24 +187,26 @@ class BoardScreen extends ConsumerWidget {
 
 class _BoardBackground extends StatelessWidget {
   final double size;
+  final bool isDark;
 
-  const _BoardBackground({required this.size});
+  const _BoardBackground({required this.size, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final canvasColor = isDark ? const Color(0xFF101010) : Colors.white;
+    final vignetteColor = isDark
+        ? Colors.white.withValues(alpha: 0.035)
+        : Colors.black.withValues(alpha: 0.03);
+
     return Stack(
       children: [
         Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-            ),
-          ),
+          child: DecoratedBox(decoration: BoxDecoration(color: canvasColor)),
         ),
         Positioned.fill(
           child: CustomPaint(
             size: Size(size, size),
-            painter: _GridPainter(),
+            painter: _GridPainter(isDark: isDark),
           ),
         ),
         // Subtle vignette so the edges feel "contained" instead of flat.
@@ -207,10 +216,7 @@ class _BoardBackground extends StatelessWidget {
               gradient: RadialGradient(
                 center: Alignment.center,
                 radius: 0.95,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.03),
-                ],
+                colors: [Colors.transparent, vignetteColor],
               ),
             ),
           ),
@@ -221,20 +227,24 @@ class _BoardBackground extends StatelessWidget {
 }
 
 class _GridPainter extends CustomPainter {
+  final bool isDark;
+
+  const _GridPainter({required this.isDark});
+
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
       // Minimal grid - premium feel with slightly better visibility
-      ..color = const Color(0x12000000)
+      ..color = isDark ? const Color(0x20FFFFFF) : const Color(0x12000000)
       ..strokeWidth = 0.7;
 
     final minorGridPaint = Paint()
       // Lighter lines for minor grid
-      ..color = const Color(0x06000000)
+      ..color = isDark ? const Color(0x10FFFFFF) : const Color(0x06000000)
       ..strokeWidth = 0.5;
 
     final nodePaint = Paint()
-      ..color = const Color(0x1A000000)
+      ..color = isDark ? const Color(0x28FFFFFF) : const Color(0x1A000000)
       ..style = PaintingStyle.fill;
 
     // Slightly larger grid for phone readability.
@@ -276,7 +286,9 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter oldDelegate) {
+    return oldDelegate.isDark != isDark;
+  }
 }
 
 class _EmptyBoardHint extends StatelessWidget {
@@ -284,6 +296,8 @@ class _EmptyBoardHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Positioned.fill(
       child: Center(
         child: Padding(
@@ -295,17 +309,17 @@ class _EmptyBoardHint extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.05),
+                  color: colorScheme.onSurface.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.black.withOpacity(0.1),
+                    color: colorScheme.onSurface.withValues(alpha: 0.14),
                     width: 1,
                   ),
                 ),
                 child: Icon(
                   Icons.add_rounded,
                   size: 28,
-                  color: Colors.black.withOpacity(0.4),
+                  color: colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
               ),
               const SizedBox(height: 20),
@@ -314,7 +328,6 @@ class _EmptyBoardHint extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
@@ -339,21 +352,23 @@ class _WorkrCanvasMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Positioned(
       top: 24,
       left: 20,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: Colors.black.withOpacity(0.08),
+            color: colorScheme.onSurface.withValues(alpha: 0.12),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -365,7 +380,7 @@ class _WorkrCanvasMark extends StatelessWidget {
             Icon(
               Icons.auto_awesome_rounded,
               size: 18,
-              color: Colors.black,
+              color: colorScheme.onSurface,
             ),
             const SizedBox(width: 8),
             Text(
@@ -373,7 +388,6 @@ class _WorkrCanvasMark extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
-                color: Colors.black,
               ),
             ),
           ],
@@ -397,9 +411,7 @@ class WorkerDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(workerName),
-      ),
+      appBar: AppBar(title: Text(workerName)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -508,8 +520,7 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color:
-                                    isSelected ? Colors.white : Colors.black,
+                                color: isSelected ? Colors.white : Colors.black,
                               ),
                             ),
                           ],
@@ -526,9 +537,7 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.04),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(0.08),
-                    ),
+                    border: Border.all(color: Colors.black.withOpacity(0.08)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,8 +600,7 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
               ? null
               : () {
                   final name = _nameController.text.trim();
-                  final description =
-                      _descriptionController.text.trim();
+                  final description = _descriptionController.text.trim();
 
                   Navigator.of(context).pop(
                     _CreateWorkerDialogResult(
@@ -610,4 +618,3 @@ class _CreateWorkerDialogState extends State<_CreateWorkerDialog> {
     );
   }
 }
-
